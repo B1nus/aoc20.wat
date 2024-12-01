@@ -1,200 +1,100 @@
-;; This sample shows how to read a file using WASM/WASI.
-;;
-;; Reading a file requires sandbox permissions in WASM. By default, WASM
-;; module cannot access the file system, and they require special permissions
-;; to be granted from the host. The majority of this code deals with obtaining
-;; the "pre-set" directory the host mapped for us, so we can open the file
-;; and read it.
-;;
-;; Eli Bendersky [https://eli.thegreenplace.net]
-;; This code is in the public domain.
 (module
-  (import "wasi_snapshot_preview1" "fd_read" (func $fd_read (param i32 i32 i32 i32) (result i32)))
   (import "wasi_snapshot_preview1" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
-  (import "wasi_snapshot_preview1" "path_open" (func $path_open (param i32 i32 i32 i32 i32 i64 i64 i32 i32) (result i32)))
 
   (memory (export "memory") 1)
+  (data (i32.const 0) "1749\n1897\n881\n1736\n1161\n1720\n1676\n305\n264\n1904\n1880\n1173\n483\n1978\n1428\n1635\n1386\n1858\n1602\n1916\n1906\n1212\n1730\n1777\n1698\n1845\n1812\n1922\n1729\n1803\n1761\n1901\n1748\n1188\n1964\n1935\n1919\n1810\n1567\n1849\n1417\n1452\n54\n1722\n1784\n1261\n1744\n1594\n1526\n1771\n1762\n1894\n1717\n1716\n51\n1955\n1143\n1741\n1999\n1775\n1944\n1983\n1962\n1198\n1553\n1835\n1867\n1662\n1461\n1811\n1764\n1726\n1927\n1179\n1468\n1948\n1813\n1213\n1905\n1371\n1751\n1215\n1392\n1798\n1823\n1815\n1923\n1942\n1987\n1887\n1838\n1395\n2007\n1479\n1752\n1945\n1621\n1538\n1937\n565\n1969\n1493\n1291\n1438\n1578\n1770\n2005\n1703\n1712\n1943\n2003\n1499\n1903\n1760\n1950\n1990\n1185\n1809\n1337\n1358\n1743\n1707\n1671\n1788\n1785\n1972\n1863\n1690\n1512\n1963\n1825\n1460\n1828\n1902\n1874\n1755\n1951\n1830\n1767\n1787\n1373\n1709\n1514\n1807\n1791\n1724\n1859\n1590\n1976\n1572\n1947\n1913\n1995\n1728\n1624\n1731\n1706\n1782\n1994\n1851\n1843\n1773\n1982\n1685\n2001\n1346\n1200\n1746\n1520\n972\n1834\n1909\n2008\n1733\n1960\n1280\n1879\n1203\n1979\n1133\n1647\n1282\n1684\n860\n1444\n1780\n1989\n1795\n1819\n1797\n1842\n1796\n1457\n1839\n1853\n1711\n1883\n1146\n1734\n1389\n;")
+  (data (i32.const 3000) " ")
+  (global $list_ptr i32 (i32.const 4000))
+  (global $print_iov_ptr i32 (i32.const 4500))
 
   (func $main (export "_start")
-    (local $bytes_read i32)
-    (local.set $bytes_read
-      (call $read
-        (global.get $filename_pos)
-        (global.get $filename_len)
-        (global.get $input_buffer_pos)))
-    (call $println
-      (global.get $input_buffer_pos)
-      (local.get $bytes_read))
+    (local $i i32)
+    (local $j i32)
+    (local $i_int i32)
+    (local $j_int i32)
+    (local $list_i i32)
+    (local $string_ptr i32)
+    (local $len i32)
+    (local $out i32)
+    (local.set $string_ptr (i32.const 0))
+    (local.set $list_i (i32.const 0))
+    (loop $fill_numbers
+      (local.set $len (i32.const 0))
+      (loop $find_len
+        (local.set $len (i32.add (local.get $len) (i32.const 1)))
+        (br_if $find_len (i32.ne (i32.load8_u (i32.add (local.get $string_ptr) (local.get $len))) (i32.const 10))))
+      (i32.store (i32.add (global.get $list_ptr) (i32.mul (local.get $list_i) (i32.const 4))) (call $parse_number (local.get $string_ptr) (local.get $len)))
+      (local.set $string_ptr (i32.add (local.get $string_ptr) (i32.add (local.get $len) (i32.const 1))))
+      (call $print_number (i32.load (i32.add (i32.mul (local.get $list_i) (i32.const 4)) (global.get $list_ptr))))
+      (call $print (i32.const 4) (i32.const 1))
+      (local.set $list_i (i32.add (local.get $list_i) (i32.const 1)))
+      (br_if $fill_numbers (i32.ne (i32.load8_u (local.get $string_ptr)) (i32.const 59))))
+    (local.set $i (i32.const 0))
+    (loop $outer
+      (local.set $j (i32.add (local.get $i) (i32.const 1)))
+      (loop $inner
+        (local.set $i_int (i32.load (i32.add (i32.mul (local.get $i) (i32.const 4)) (global.get $list_ptr))))
+        (local.set $j_int (i32.load (i32.add (i32.mul (local.get $j) (i32.const 4)) (global.get $list_ptr))))
+        (call $print_number (local.get $i_int))
+        (call $print (i32.const 3000) (i32.const 1))
+        (call $print_number (local.get $j_int))
+        (call $print (i32.const 4) (i32.const 1))
+        (if (i32.eq (i32.add (local.get $i_int) (local.get $j_int)) (i32.const 2020)) (then 
+          (local.set $out (i32.mul (local.get $i_int) (local.get $j_int)))
+          (call $print (i32.const 4) (i32.const 1))
+          )
+        )
+        (local.set $j (i32.add (local.get $j) (i32.const 1)))
+        (br_if $inner (i32.lt_u (local.get $j) (local.get $list_i))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br_if $outer (i32.lt_u (i32.add (local.get $i) (i32.const 1)) (local.get $list_i))))
+    (call $print_number (local.get $out))
+    (call $print (i32.const 4) (i32.const 1))
   )
 
-  ;; Print and add a newline if it is missing
-  (func $println (param $pos i32) (param $len i32)
-    (local $last_8 i32)
+  (func $parse_number (param $ptr i32) (param $len i32) (result i32)
+    (local $i i32)
+    (local $num i32)
+    (local.set $num (i32.const 0))
+    (loop $loop
+      (local.set $num (i32.mul (local.get $num) (i32.const 10)))
+      (local.set $num (i32.add (local.get $num) (i32.sub (i32.load8_u (i32.add (local.get $ptr) (local.get $i))) (i32.const 48))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br_if $loop (i32.lt_u (local.get $i) (local.get $len))))
+    (return (local.get $num))
+  )
 
+  (func $print_number (param $num i32)
+    (local $ptr i32)
+    (local $i i32)
+    (local.set $i (i32.const 0))
+    (local.set $ptr (i32.const 5000))
+
+    (loop $loop
+      (i32.store8
+        (i32.sub (local.get $ptr) (local.get $i))
+        (i32.add (i32.rem_u (local.get $num) (i32.const 10)) (i32.const 48))) ;; add 48 which is the ascii value for '0'
+      (local.set $num (i32.div_u (local.get $num) (i32.const 10)))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+
+      (br_if $loop (i32.gt_u (local.get $num) (i32.const 0))))
     (call $print
-      (local.get $pos)
-      (local.get $len))
-    
-    (local.set $last_8 (i32.load8_u (i32.sub (i32.add (local.get $pos) (local.get $len)) (i32.const 1))))
-    (if (i32.ne 
-        (local.get $last_8)
-        (i32.const 10)
-      )
-      (then
-        (local.set $pos (i32.add (global.get $print_iov_pos) (i32.const 12)))
-        (i32.store8 (local.get $pos) (i32.const 10))
-        (call $print
-          (local.get $pos)
-          (i32.const 1))
-      )
-    )
+      (i32.add (i32.sub (local.get $ptr) (local.get $i)) (i32.const 1))
+      (local.get $i))
   )
 
-  (func $print_num_ln (param $num i32)
-    ;; TODO
-  )
-
-  ;; A helper function to avoid the work of declaring iovs
-  (func $print (param $pos i32) (param $len i32)
+  (func $print (param $ptr i32) (param $len i32)
     ;; The start pos and length for the string to print.
-    (i32.store (global.get $print_iov_pos) (local.get $pos))
-    (i32.store (i32.add (global.get $print_iov_pos) (i32.const 4)) (local.get $len))
+    (i32.store (global.get $print_iov_ptr) (local.get $ptr))
+    (i32.store (i32.add (global.get $print_iov_ptr) (i32.const 4)) (local.get $len))
 
     ;; Printing
     (call $fd_write
       (i32.const 1) ;; fd = 1 (stdout)
-      (global.get $print_iov_pos)
-      (i32.const 1)
-      (i32.add (global.get $print_iov_pos) (i32.const 8))
+      (global.get $print_iov_ptr)
+      (i32.const 1) ;; iovs_len 
+      (i32.add (global.get $print_iov_ptr) (i32.const 8)) ;; return ptr https://github.com/WebAssembly/WASI/blob/main/legacy/tools/witx-docs.md
     )
     drop
   )
-
-  (func $print_num (param $num i32)
-    ;; TODO
-  )
-
-  ;; Put the number into memory as a string. The return value is the length of the string.
-  (func $num_string (param $num i32) (param $pos i32) (result i32)
-    ;; TODO
-    i32.const 0
-  )
-
-    ;; println_number prints a number as a string to stdout, adding a newline.
-    ;; It takes the number as parameter.
-    (; (func $println_number (param $num i32) ;)
-    (;     (local $numtmp i32) ;)
-    (;     (local $numlen i32) ;)
-    (;     (local $writeidx i32) ;)
-    (;     (local $digit i32) ;)
-    (;     (local $dchar i32) ;)
-    (;;)
-    (;     ;; Count the number of characters in the output, save it in $numlen. ;)
-    (;     (i32.lt_s (local.get $num) (i32.const 10)) ;)
-    (;     if ;)
-    (;         (local.set $numlen (i32.const 1)) ;)
-    (;     else ;)
-    (;         (local.set $numlen (i32.const 0)) ;)
-    (;         (local.set $numtmp (local.get $num)) ;)
-    (;         (loop $countloop (block $breakcountloop ;)
-    (;             (i32.eqz (local.get $numtmp)) ;)
-    (;             br_if $breakcountloop ;)
-    (;;)
-    (;             (local.set $numtmp (i32.div_u (local.get $numtmp) (i32.const 10))) ;)
-    (;             (local.set $numlen (i32.add (local.get $numlen) (i32.const 1))) ;)
-    (;             br $countloop ;)
-    (;         )) ;)
-    (;     end ;)
-    (;;)
-    (;     ;; Now that we know the length of the output, we will start populating ;)
-    (;     ;; digits into the buffer. E.g. suppose $numlen is 4: ;)
-    (;     ;; ;)
-    (;     ;;                     _  _  _  _ ;)
-    (;     ;; ;)
-    (;     ;;                     ^        ^ ;)
-    (;     ;;  $itoa_out_buf -----|        |---- $writeidx ;)
-    (;     ;; ;)
-    (;     ;; ;)
-    (;     ;; $writeidx starts by pointing to $itoa_out_buf+3 and decrements until ;)
-    (;     ;; all the digits are populated. ;)
-    (;     (local.set $writeidx ;)
-    (;         (i32.sub ;)
-    (;             (i32.add (global.get $itoa_out_buf) (local.get $numlen)) ;)
-    (;             (i32.const 1))) ;)
-    (;;)
-    (;     (loop $writeloop ;)
-    (;         ;; digit <- $num % 10 ;)
-    (;         (local.set $digit (i32.rem_u (local.get $num) (i32.const 10))) ;)
-    (;         ;; set the char value from the lookup table of digit chars ;)
-    (;         (local.set $dchar (i32.load8_u offset=8000 (local.get $digit))) ;)
-    (;;)
-    (;         ;; mem[writeidx] <- dchar ;)
-    (;         (i32.store8 (local.get $writeidx) (local.get $dchar)) ;)
-    (;;)
-    (;         ;; num <- num / 10 ;)
-    (;         (local.set $num (i32.div_u (local.get $num) (i32.const 10))) ;)
-    (;;)
-    (;         ;; If after writing a number we see we wrote to the first index in ;)
-    (;         ;; the output buffer, we're done. ;)
-    (;         (i32.ne (local.get $writeidx) (global.get $itoa_out_buf)) ;)
-    (;         br_if $writeloop ;)
-    (;       ) ;)
-    (;;)
-    (;     (call $println ;)
-    (;         (global.get $itoa_out_buf) ;)
-    (;         (local.get $numlen)) ;)
-    (; ) ;)
-
-  ;; Read the file with the name starting at $name_pos with length $name_len. Dump the files text into memory at $dump_pos. The return value is the length of the text. This function does not handle any errors.
-  (func $read (param $name_pos i32) (param $name_len i32) (param $dump_pos i32) (result i32)
-    ;; The I/O vector for the fd_read output
-    (local $iov i32)
-    (local $bytes_read i32)
-    (local.set $iov (i32.add (global.get $input_buffer_len) (local.get $dump_pos)))
-
-    ;; Store the I/O vector
-    (i32.store (local.get $iov) (local.get $dump_pos))
-    (i32.store (i32.add (local.get $iov) (i32.const 4)) (global.get $input_buffer_len))
-
-    ;; The position to store the amount of bytes read in memory. This puts it right after the I/O vector.
-    (local.set $bytes_read (i32.add (local.get $iov) (i32.const 8)))
-
-      (call $path_open
-        (i32.const 3) ;; fd=3 base dir
-        (i32.const 1) ;; symlink_follow = 1
-        (local.get $name_pos)
-        (local.get $name_len)
-        (i32.const 0) ;; oflags = 0
-        (i64.const 3) ;; fd_rights_base
-        (i64.const 3) ;; fd_rights_inheriting
-        (i32.const 0) ;; fdflags = 0
-        (local.get $dump_pos)) ;; The fd for the fd_read we'll use later
-
-      (call $fd_read
-        (i32.load (local.get $dump_pos)) ;; fd ("File Descriptor")
-        (local.get $iov)
-        (i32.const 1)
-        (local.get $bytes_read))
-
-    (return (i32.load (local.get $bytes_read)))
-  )
-
-  ;; These slots are used as parameters for fd_write, and its return value.
-  (global $datavec_addr i32 (i32.const 7900))
-  (global $datavec_len i32 (i32.const 7904))
-  (global $fdwrite_ret i32 (i32.const 7908))
-
-  ;; Using some memory for a number-->digit ASCII lookup-table, and then the
-  ;; space for writing the result of $itoa.
-  (data (i32.const 8000) "0123456789")
-  (data (i32.const 8010) "\n")
-  (global $itoa_out_buf i32 (i32.const 8020))
-
-  ;; Reading input file
-  (global $filename_pos i32 (i32.const 0))
-  (global $filename_len i32 (i32.const 5))
-  (data (i32.const 0) "1.txt")
-  (global $input_buffer_pos i32 (i32.const 16384))
-  (global $input_buffer_len i32 (i32.const 16384))
-  (global $print_iov_pos i32 (i32.const 32768))
 )
