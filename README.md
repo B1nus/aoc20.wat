@@ -1,5 +1,2 @@
-# aoc23.wat
-Solving [Advent of Code 2023](https://adventofcode.com/2023) in the [WebAssembly Text Format](https://developer.mozilla.org/en-US/docs/WebAssembly/Understanding_the_text_format), the "human-readable" version of WebAssembly.
-
-# WASI
-I'm using [WASI](https://wasi.dev/) for reading files and printing to the terminal. To run my files you first need to install the compiler [`wabt`](https://github.com/WebAssembly/wabt) and the runtime [`wasmtime`](https://wasmtime.dev/). Then you can run my programs with: `wat2wasm 5.wat --output=- | wasmtime --dir=input::/ <(cat)`.
+# aoc20.wasm
+Solving [Advent of Code 2020](https://adventofcode.com/2020) in [WebAssembly](https://webassembly.org/). I write in the binary format and I use the web as my host environment. Run my solutions with my helper python script *server.py* and give the argument of the day to test: `$ python serve.py 5`. You also need some input files of your own.
