@@ -92,20 +92,15 @@
   )
 
   (func $check_password (param $min i32) (param $max i32) (param $char i32) (param $ptr i32) (result i32 i32)
-    (local $count i32)
-    (local $byte i32)
+    (local.set $ptr (i32.add (local.get $ptr) (i32.const 1)))
+    (i32.eq (i32.load8_u (i32.add (local.get $ptr) (local.get $min))) (local.get $char))
+    (i32.eq (i32.load8_u (i32.add (local.get $ptr) (local.get $max))) (local.get $char))
+    (i32.xor)
     (loop $count_loop
-      (local.set $byte (i32.load8_u (local.get $ptr)))
-      (if (i32.eq (local.get $byte) (local.get $char))
-        (then
-          (local.set $count (i32.add (local.get $count) (i32.const 1)))
-        )
-      )
       (local.set $ptr (i32.add (local.get $ptr) (i32.const 1)))
-      (br_if $count_loop (i32.ne (local.get $byte) (i32.const 10)))
+      (br_if $count_loop (i32.ne (i32.load8_u (local.get $ptr)) (i32.const 10)))
     )
-    (i32.and (i32.le_u (local.get $count) (local.get $max)) (i32.ge_u (local.get $count) (local.get $min)))
-    (local.get $ptr)
+    (i32.add (local.get $ptr) (i32.const 1))
   )
 
   (func $read_all (result i32)
